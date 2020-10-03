@@ -57,21 +57,6 @@ class ToDoList:
                 print('Invalid menu entry')
                 print()
 
-    # Today's tasks: print all today's tasks
-    def today_tasks(self):
-        self.rows = session.query(Task).filter(Task.deadline == self.today_date.date()).all()
-
-        print()
-        print(f'Today {self.today_date.day} {self.current_short_month}:')
-        if self.rows:
-            row_num = 1
-            for self.row in self.rows:
-                print(f"{row_num}. {self.row.task}")
-                row_num += 1
-        else:
-            print('Nothing to do!')
-        print()
-
     @staticmethod
     def add_task():
         print()
@@ -91,30 +76,63 @@ class ToDoList:
         print('The task has been added')
         print()
 
+    # Today's tasks: print all today's tasks
+    def today_tasks(self):
+        rows = session.query(Task).filter(Task.deadline == self.today_date.date()).all()
+
+        print()
+        print(f'Today {self.today_date.day} {self.current_short_month}:')
+        if rows:
+            row_num = 1
+            for row in rows:
+                print(f"{row_num}. {row.task}")
+                row_num += 1
+        else:
+            print('Nothing to do!')
+        print()
+
     # Week's tasks: prints all tasks for 7 days from today.
     def week_tasks(self):
-        pass
-        # self.rows = session.query(Task)
-        # print()
-        # print(f'Today {self.today_date.day} {self.short_month}:')
-        # if self.rows:
-        #     for self.row in self.rows:
-        #         print(f"{self.row.id}. {self.row.task}")
-        # else:
-        #     print('Nothing to do!')
-        # print()
+        week_ends = self.today_date + timedelta(days=6)
+        rows = session.query(Task).filter(Task.deadline.between((self.today_date - timedelta(days=1)), week_ends)).order_by(Task.deadline)
+        filtered_tasks = {}
+        print()
 
+        # Create dictionary containing current week
+        for i in range(7):
+            day = self.today_date + timedelta(days=i)
+            filtered_tasks[day.strftime('%A')] = {'date': day.strftime('%d'), 'month': day.strftime('%b'), 'task': []}
+
+        # Append tasks to current weeks task dictionary
+        for row in rows:
+            filtered_tasks[row.deadline.strftime('%A')]['task'].append(row.task)
+
+        # Print out tasks
+        for day, details in filtered_tasks.items():
+            if len(details['task']) == 0:
+                print(f"{day} {details['date']} {details['month']}:")
+                print('Nothing to do!')
+                print()
+            else:
+                row_num = 1
+                print(f"{day} {details['date']} {details['month']}:")
+                for item in details['task']:
+                    print(f"{row_num}. {item}")
+                    row_num += 1
+                print()
+
+    @staticmethod
     # All tasks: prints all tasks sorted by deadline.
-    def all_tasks(self):
-        self.rows = session.query(Task).order_by(Task.deadline).all()
+    def all_tasks():
+        rows = session.query(Task).order_by(Task.deadline).all()
 
         print()
         print('All tasks:')
-        if self.rows:
+        if rows:
             row_num = 1
-            for self.row in self.rows:
-                self.short_month = self.row.deadline.strftime('%b')
-                print(f"{row_num}. {self.row.task}. {self.row.deadline.day} {self.short_month}")
+            for row in rows:
+                short_month = row.deadline.strftime('%b')
+                print(f"{row_num}. {row.task}. {row.deadline.day} {short_month}")
                 row_num += 1
         else:
             print('Nothing to do!')
@@ -122,5 +140,4 @@ class ToDoList:
 
 
 if __name__ == '__main__':
-    # task = Task()
     to_do_list = ToDoList()
