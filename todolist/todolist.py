@@ -59,16 +59,18 @@ class ToDoList:
 
     # Today's tasks: print all today's tasks
     def today_tasks(self):
-        pass
-        # self.rows = session.query(Task)
-        # print()
-        # print(f'Today {self.today_date.day} {self.short_month}:')
-        # if self.rows:
-        #     for self.row in self.rows:
-        #         print(f"{self.row.id}. {self.row.task}")
-        # else:
-        #     print('Nothing to do!')
-        # print()
+        self.rows = session.query(Task).filter(Task.deadline == self.today_date.date()).all()
+
+        print()
+        print(f'Today {self.today_date.day} {self.current_short_month}:')
+        if self.rows:
+            row_num = 1
+            for self.row in self.rows:
+                print(f"{row_num}. {self.row.task}")
+                row_num += 1
+        else:
+            print('Nothing to do!')
+        print()
 
     @staticmethod
     def add_task():
@@ -107,11 +109,13 @@ class ToDoList:
         self.rows = session.query(Task).order_by(Task.deadline).all()
 
         print()
-        print(f'Today {self.today_date.day} {self.current_short_month}:')
+        print('All tasks:')
         if self.rows:
+            row_num = 1
             for self.row in self.rows:
                 self.short_month = self.row.deadline.strftime('%b')
-                print(f"{self.row.id}. {self.row.task}. {self.row.deadline.day} {self.short_month}")
+                print(f"{row_num}. {self.row.task}. {self.row.deadline.day} {self.short_month}")
+                row_num += 1
         else:
             print('Nothing to do!')
         print()
