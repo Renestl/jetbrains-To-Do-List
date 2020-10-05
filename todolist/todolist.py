@@ -29,14 +29,17 @@ class ToDoList:
     def __init__(self):
         self.today_date = datetime.today()
         self.current_short_month = self.today_date.strftime('%b')
+        self.tasks = {}
         self.main_menu()
 
     def main_menu(self):
         while True:
-            print("1) Today's tasks")
+            print("1) Today's tasks")  # prints all tasks for today.
             print("2) Week's tasks")  # prints all tasks for 7 days from today.
             print("3) All tasks")  # prints all tasks sorted by deadline.
-            print("4) Add task")
+            print("4) Missed tasks")  # prints all tasks whose deadline was missed, that is, tasks whose deadline date is earlier than today's date.
+            print("5) Add task")  # deletes the chosen task. Print 'Nothing to delete' if the tasks list is empty.
+            print("6) Delete task")
             print("0) Exit")
 
             menu_choice = input()
@@ -46,9 +49,15 @@ class ToDoList:
             elif menu_choice == '2':
                 self.week_tasks()
             elif menu_choice == '3':
+                print()
+                print('All tasks:')
                 self.all_tasks()
             elif menu_choice == '4':
+                self.missed_tasks()
+            elif menu_choice == '5':
                 self.add_task()
+            elif menu_choice == '6':
+                self.delete_task()
             elif menu_choice == '0':  # Exit
                 print()
                 print('Bye!')
@@ -74,6 +83,25 @@ class ToDoList:
         session.commit()
 
         print('The task has been added')
+        print()
+
+    def delete_task(self):
+        print()
+        print('Choose the number of the task you want to delete:')
+
+        # populate or update self.tasks dictionary and print task list
+        self.all_tasks()
+
+        del_task = input()
+        task_id = self.tasks[del_task]['id']
+
+        # delete a specific row
+        rows = session.query(Task).filter(Task.id == task_id)
+        deleted_task = rows[0]  # in case rows is not empty
+        session.delete(deleted_task)
+        session.commit()
+
+        print('The task has been deleted!')
         print()
 
     # Today's tasks: print all today's tasks
@@ -121,13 +149,27 @@ class ToDoList:
                     row_num += 1
                 print()
 
-    @staticmethod
+    # @staticmethod
     # All tasks: prints all tasks sorted by deadline.
-    def all_tasks():
+    def all_tasks(self):
         rows = session.query(Task).order_by(Task.deadline).all()
 
+        if rows:
+            row_num = 1
+            for row in rows:
+                short_month = row.deadline.strftime('%b')
+                print(f"{row_num}. {row.task}. {row.deadline.day} {short_month}")
+                self.tasks[f'{row_num}'] = {'id': row.id, 'task': row.task, 'date': row.deadline.day, 'month': row.deadline.month}
+                row_num += 1
+        else:
+            print('Nothing to do!')
         print()
-        print('All tasks:')
+
+    def missed_tasks(self):
+        rows = session.query(Task).filter(Task.deadline <= self.today_date).order_by(Task.deadline)
+
+        print()
+        print('Missed tasks:')
         if rows:
             row_num = 1
             for row in rows:
@@ -135,7 +177,7 @@ class ToDoList:
                 print(f"{row_num}. {row.task}. {row.deadline.day} {short_month}")
                 row_num += 1
         else:
-            print('Nothing to do!')
+            print("Nothing is missed!")
         print()
 
 
